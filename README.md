@@ -40,5 +40,5 @@ Expected Some Images:
 2. image2
 
 ## Why I choose this problem
-> I just thought new articles will be a great source of information where several types of
-information can be found. which pick my interest.
+> I just thought news articles are always a great source of information where several types of
+information can be found. which picks my interest.
