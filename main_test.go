@@ -16,7 +16,7 @@ func TestGetHTMLContent(t *testing.T) {
 	// Test fetching HTML content
 	doc, err := getHTMLContent(server.URL)
 	if err != nil {
-		t.Errorf("Failed to fetch HTML content: %v", err)
+		t.Errorf("failed to fetch HTML content: %v", err)
 	}
 
 	// Verify the title and body text
@@ -27,8 +27,6 @@ func TestGetHTMLContent(t *testing.T) {
 		t.Errorf("Title and body do not match. Expected: %s, %s, Got: %s, %s", expectedTitle, expectedBody, title, body)
 	}
 }
-
-// Additional test cases for other functions can be added similarly
 
 func TestSanitizeFilename(t *testing.T) {
 	testCases := []struct {
@@ -43,7 +41,7 @@ func TestSanitizeFilename(t *testing.T) {
 	for _, testCase := range testCases {
 		result := sanitizeFilename(testCase.input)
 		if result != testCase.expected {
-			t.Errorf("SanitizeFilename failed for input %s. Expected: %s, Got: %s", testCase.input, testCase.expected, result)
+			t.Errorf("sanitizeFilename failed for input %s. Expected: %s, Got: %s", testCase.input, testCase.expected, result)
 		}
 	}
 }

@@ -5,7 +5,7 @@ body, images from that URL.
 ## Run
 ```
 make build
-
+then ->
 make run
 ```
 

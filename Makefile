@@ -20,6 +20,7 @@ endif
 build:
 	@echo "Building $(APP_NAME)..."
 	@mkdir $(DIST)
+	@go mod vendor
 	@go build -o $(BINARY_NAME) -ldflags "$(LDFLAGS)" $(SRC)
 
 # Run the application
