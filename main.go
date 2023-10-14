@@ -36,7 +36,7 @@ func main() {
 	fmt.Println("Title:", title)
 	fmt.Println("Body:", body)
 
-	// Create the save directory
+	// Create the save directory for images
 	if err := os.MkdirAll(saveDirectory, os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %s: %v\n", saveDirectory, err)
 		return
