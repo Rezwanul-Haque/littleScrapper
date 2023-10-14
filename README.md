@@ -2,19 +2,24 @@
 > A command line scrapper tool which will take a URL and scrape title,
 body, images from that URL.
 
-# Run
+## Run
 ```
 make build
 
 make run
 ```
 
-# clean
+## clean
 ```
 make clean
 ```
 
-# help
+## help
 ```
 make help
+```
+
+## test
+```
+make test
 ```
