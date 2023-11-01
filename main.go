@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -13,44 +12,23 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func main() {
-	var url string
-	fmt.Print("Enter the URL you want to scrape: ")
-	_, err := fmt.Scanln(&url)
-	if err != nil {
-		fmt.Printf("failed to read URL: %v\n", err)
-		return
-	}
+// WebScraper represents a web scraping utility.
+type WebScraper struct {
+	URL           string
+	SaveDirectory string
+}
 
-	saveDirectory := "images"
-
-	// Fetch the web page content
-	doc, err := getHTMLContent(url)
-	if err != nil {
-		fmt.Printf("failed to fetch content from %s: %v\n", url, err)
-		return
-	}
-
-	// Extract title and body text
-	title, body := extractTitleAndBody(doc)
-	fmt.Println("Title:", title)
-	fmt.Println("Body:", body)
-
-	// Create the save directory for images
-	if err := os.MkdirAll(saveDirectory, os.ModePerm); err != nil {
-		fmt.Printf("failed to create directory %s: %v\n", saveDirectory, err)
-		return
-	}
-
-	// Scrape and download images
-	if err := scrapeImages(doc, saveDirectory); err != nil {
-		fmt.Printf("failed to scrape and download images: %v\n", err)
+// NewWebScraper creates a new WebScraper instance.
+func NewWebScraper(url, saveDirectory string) *WebScraper {
+	return &WebScraper{
+		URL:           url,
+		SaveDirectory: saveDirectory,
 	}
 }
 
-// getHTMLContent to fetch web page content
-func getHTMLContent(url string) (*goquery.Document, error) {
-	response, err := http.Get(url)
+// FetchHTMLContent fetches the HTML content of the web page.
+func (ws *WebScraper) FetchHTMLContent() (*goquery.Document, error) {
+	response, err := http.Get(ws.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +42,8 @@ func getHTMLContent(url string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-// extractTitleAndBody to extract the title and body text from the HTML document
-func extractTitleAndBody(doc *goquery.Document) (string, string) {
+// ExtractTitleAndBody extracts the title and body text from the HTML content.
+func (ws *WebScraper) ExtractTitleAndBody(doc *goquery.Document) (string, string) {
 	title := doc.Find("title").Text()
 	body := strings.Builder{}
 	doc.Find("p").Each(func(index int, element *goquery.Selection) {
@@ -73,33 +51,36 @@ func extractTitleAndBody(doc *goquery.Document) (string, string) {
 		body.WriteString(" ")
 	})
 
-	return strings.TrimSpace(title), strings.TrimSpace(body.String())
+	return title, body.String()
 }
 
-// scrapeImages to scrape and download images
-func scrapeImages(doc *goquery.Document, saveDirectory string) error {
+// ScrapeImages scrapes and downloads images from the web page.
+func (ws *WebScraper) ScrapeImages(doc *goquery.Document) error {
 	doc.Find("img").Each(func(index int, element *goquery.Selection) {
 		imgURL, _ := element.Attr("src")
 		if imgURL != "" {
 			imgResponse, err := http.Get(imgURL)
 			if err != nil {
-				fmt.Printf("failed to download image from %s: %v\n", imgURL, err)
+				fmt.Printf("Failed to download image from %s: %v\n", imgURL, err)
 				return
 			}
 			defer imgResponse.Body.Close()
 
-			imgName := sanitizeFilename(imgURL)
-			imgPath := path.Join(saveDirectory, imgName)
+			// Extract a valid file name from the URL
+			imgName := path.Base(imgURL)
+			imgName = ws.sanitizeFilename(imgName)
+
+			imgPath := path.Join(ws.SaveDirectory, imgName)
 			imgFile, err := os.Create(imgPath)
 			if err != nil {
-				fmt.Printf("failed to create image file %s: %v\n", imgPath, err)
+				fmt.Printf("Failed to create image file %s: %v\n", imgPath, err)
 				return
 			}
 			defer imgFile.Close()
 
 			_, err = io.Copy(imgFile, imgResponse.Body)
 			if err != nil {
-				fmt.Printf("failed to save image to file %s: %v\n", imgPath, err)
+				fmt.Printf("Failed to save image to file %s: %v\n", imgPath, err)
 			}
 		}
 	})
@@ -107,18 +88,40 @@ func scrapeImages(doc *goquery.Document, saveDirectory string) error {
 	return nil
 }
 
-// sanitizeFilename to sanitize a file name
-func sanitizeFilename(imgURL string) string {
-	parsedURL, err := url.Parse(imgURL)
-	if err != nil {
-		// Handle parsing error
-		return ""
-	}
+// SanitizeFilename sanitizes a file name to make it valid and clean.
+func (ws *WebScraper) sanitizeFilename(filename string) string {
+	// Replace spaces with underscores
+	filename = strings.ReplaceAll(filename, " ", "_")
 
-	filename := path.Base(parsedURL.Path)
-
-	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
-	filename = re.ReplaceAllString(filename, "_")
+	// Remove invalid characters using a regular expression
+	re := regexp.MustCompile("[^a-zA-Z0-9_.-]")
+	filename = re.ReplaceAllString(filename, "")
 
 	return filename
+}
+
+func main() {
+	url := "https://www.theguardian.com/politics/2018/aug/19/brexit-tory-mps-warn-of-entryism-threat-from-leave-eu-supporters"
+	saveDirectory := "images"
+
+	ws := NewWebScraper(url, saveDirectory)
+
+	doc, err := ws.FetchHTMLContent()
+	if err != nil {
+		fmt.Printf("failed to fetch content from %s: %v\n", ws.URL, err)
+		return
+	}
+
+	title, body := ws.ExtractTitleAndBody(doc)
+	fmt.Println("Title:", title)
+	fmt.Println("Body:", body)
+
+	if err := os.MkdirAll(ws.SaveDirectory, os.ModePerm); err != nil {
+		fmt.Printf("failed to create directory %s: %v\n", ws.SaveDirectory, err)
+		return
+	}
+
+	if err := ws.ScrapeImages(doc); err != nil {
+		fmt.Printf("failed to scrape and download images: %v\n", err)
+	}
 }

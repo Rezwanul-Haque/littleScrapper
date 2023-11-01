@@ -17,6 +17,9 @@ else
 endif
 
 # Build the application
+dev:
+	@docker-compose up --build
+
 build:
 	@echo "Building $(APP_NAME)..."
 	@mkdir $(DIST)

@@ -1,0 +1,8 @@
+version: "3.7"
+
+services:
+  littlescrapper:
+    container_name: little-scrapper
+    build:
+      context: .
+      dockerfile: Dockerfile
